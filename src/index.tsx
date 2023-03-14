@@ -1,84 +1,76 @@
 import {
-  ButtonItem,
   definePlugin,
+  ButtonItem,
   DialogButton,
-  Menu,
-  MenuItem,
+  DropdownItem,
   PanelSection,
   PanelSectionRow,
   Router,
   ServerAPI,
-  showContextMenu,
   staticClasses,
 } from "decky-frontend-lib";
-import { VFC } from "react";
-import { FaShip } from "react-icons/fa";
+import { Fragment, VFC, useState } from "react";
+import { FaEdit } from "react-icons/fa";
+import * as backend from "./backend"
 
-import logo from "../assets/logo.png";
+const levelOptions = [
+  { data: 0, label: 'None', value: 'none' },
+  { data: 1, label: 'FPS', value: 'fps' },
+  { data: 2, label: 'Top Menu', value: 'top' },
+  { data: 3, label: 'Basic', value: 'basic' },
+  { data: 4, label: 'Full', value: 'full' },
+];
 
-// interface AddMethodArgs {
-//   left: number;
-//   right: number;
-// }
+const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
+  backend.setServer(serverAPI);
+  const [config, setConfig] = useState<string>("test");
+  const [level, setLevel] = useState<number>(2);
+  backend.resolvePromise(backend.load(level), setConfig);
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
-  // const [result, setResult] = useState<number | undefined>();
+  const onLoadClick = () => {
+    backend.resolvePromise(backend.load(level), setConfig);
+  }
 
-  // const onClick = async () => {
-  //   const result = await serverAPI.callPluginMethod<AddMethodArgs, number>(
-  //     "add",
-  //     {
-  //       left: 2,
-  //       right: 2,
-  //     }
-  //   );
-  //   if (result.success) {
-  //     setResult(result.result);
-  //   }
-  // };
+  const onSaveClick = () => {
+    const config = document.getElementById("configText").value
+    backend.resolvePromise(backend.save(config), setConfig)
+  };
 
   return (
-    <PanelSection title="Panel Section">
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={(e) =>
-            showContextMenu(
-              <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {}}>
-                <MenuItem onSelected={() => {}}>Item #1</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #2</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #3</MenuItem>
-              </Menu>,
-              e.currentTarget ?? window
-            )
-          }
-        >
-          Server says yolo
-        </ButtonItem>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
-        </div>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Router.CloseSideMenus();
-            Router.Navigate("/decky-plugin-test");
+    <Fragment>
+      <Fragment>
+        <DropdownItem
+          label="Load Config"
+          description='Loads predefined configs'
+          menuLabel="Config Style"
+          rgOptions={levelOptions.map((o) => ({
+            data: o.data,
+            label: o.label,
+          }))}
+          selectedOption={levelOptions.find((o) => o.data === level)?.data || 2}
+          onChange={(newLevel: { data: number; label: string }) => {
+            setLevel(newLevel.data);
           }}
-        >
-          Router
+          />
+        <ButtonItem layout="inline" onClick={onLoadClick}>
+          {'Load'}
         </ButtonItem>
-      </PanelSectionRow>
-    </PanelSection>
+      </Fragment>
+      <Fragment>
+        <textarea
+          rows={15}
+          id={'configText'}
+          value={config}
+        />
+        <ButtonItem layout="inline" onClick={onSaveClick}>
+          {'Save'}
+        </ButtonItem>
+      </Fragment>
+    </Fragment>
   );
 };
 
-const DeckyPluginRouterTest: VFC = () => {
+const MangoEditorRouter: VFC = () => {
   return (
     <div style={{ marginTop: "50px", color: "white" }}>
       Hello World!
@@ -90,16 +82,16 @@ const DeckyPluginRouterTest: VFC = () => {
 };
 
 export default definePlugin((serverApi: ServerAPI) => {
-  serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
+  serverApi.routerHook.addRoute("/mango-editor", MangoEditorRouter, {
     exact: true,
   });
 
   return {
-    title: <div className={staticClasses.Title}>Example Plugin</div>,
+    title: <div className={staticClasses.Title}>MangoEditor</div>,
     content: <Content serverAPI={serverApi} />,
-    icon: <FaShip />,
+    icon: <FaEdit />,
     onDismount() {
-      serverApi.routerHook.removeRoute("/decky-plugin-test");
+      serverApi.routerHook.removeRoute("/mango-editor");
     },
   };
 });
