@@ -23,7 +23,7 @@ const levelOptions = [
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   backend.setServer(serverAPI);
-  const [config, setConfig] = useState<string>("test");
+  const [config, setConfig] = useState<string>("not loaded");
   const [level, setLevel] = useState<number>(2);
   backend.resolvePromise(backend.load(level), setConfig);
 
@@ -32,8 +32,11 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   }
 
   const onSaveClick = () => {
-    const config = document.getElementById("configText").value
     backend.resolvePromise(backend.save(config), setConfig)
+  };
+
+  const handleFormChange = (e) => {
+    setConfig(e.target.value)
   };
 
   return (
@@ -59,8 +62,8 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       <Fragment>
         <textarea
           rows={15}
-          id={'configText'}
           value={config}
+          onChange={handleFormChange}
         />
         <ButtonItem layout="inline" onClick={onSaveClick}>
           {'Save'}
